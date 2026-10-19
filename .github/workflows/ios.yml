@@ -1,0 +1,51 @@
+name: iOS unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/ios.yml'
+      - 'scripts/build-ios-unsigned.sh'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build and verify unsigned device app
+        run: bash scripts/build-ios-unsigned.sh
+      - name: Upload IPA and checksum
+        uses: actions/upload-artifact@v7
+        with:
+          name: openGym-iOS-unsigned
+          path: |
+            ios-artifacts/openGym-*-unsigned.ipa
+            ios-artifacts/openGym-*-unsigned.ipa.sha256
+            ios-artifacts/build-info.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - name: Upload build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: iOS-build-diagnostics
+          path: ios-artifacts/*.log
+          retention-days: 7

@@ -11,6 +11,7 @@ data/
 
 # Build output / deps
 frontend/dist/
+ios-artifacts/
 node_modules/
 *.log
 .DS_Store
