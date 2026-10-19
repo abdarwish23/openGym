@@ -12,6 +12,7 @@ OUT="$ROOT/ios-artifacts"
 BUILD_DIR="$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/opengym-ios.XXXXXX")"
 trap 'rm -rf "$BUILD_DIR"' EXIT
 mkdir -p "$OUT"
+trap 'printf "Failed at line %s: %s\n" "$LINENO" "$BASH_COMMAND" | tee "$OUT/build-error.log" >&2' ERR
 
 xcodebuild -version
 pod --version
@@ -40,7 +41,7 @@ test -f "$APP/public/index.html"
 test -f "$APP/public/exercise-media/NOTICE.md"
 test -z "$(find "$APP" -name embedded.mobileprovision -print -quit)"
 EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")"
-lipo -verify_arch arm64 "$APP/$EXECUTABLE"
+lipo "$APP/$EXECUTABLE" -verify_arch arm64
 
 mkdir "$BUILD_DIR/Payload"
 ditto "$APP" "$BUILD_DIR/Payload/App.app"
